@@ -1,0 +1,92 @@
+########################################
+
+##### ARCH CONFIG FILE #####
+
+########################################
+
+## [ NOTE: Boot Manager will be BOOTX64.EFI in BOOT folder, must be custom Manager in BIOS to load Arch & W10 ]
+
+### NEW INSTALL ###
+
+# sudo wifi-menu -o
+ping -c 1 www.google.com
+# pacman -Sy vim
+# vim /etc/pacman.d/mirrorlist
+lsblk
+timedatectl set-ntp true
+# cfdisk secondary option
+fdisk -l
+fdisk /dev/nvme0n1 || /dev/sda
+  g
+  n > +200MB && rest of the file system
+  t > UEFI && Linux filesystem
+mkfs.ext4 /dev/nvme0n1p5 || /dev/sda2
+mkfs.fat -F32 /dev/sda1  
+  # [ NOTE: ALREADY DONE w/ W10 ] 
+mount /dev/nvme0n1p5 /mnt || /dev/sda2 /mnt
+mkdir /mnt/boot
+mount /dev/nvme0n1p2 /mnt/boot || /dev/sda1 /mnt/boot
+  # [ NOTE: "rm /mnt/boot/vmlinuz-linux" if reinstalling Arch. ]
+pacman -Sy archlinux-keyring
+pacstrap /mnt base base-devel linux linux-firmware vim man-db man-pages inetutils netctl dhcpcd s-nail intel-ucode
+genfstab -U /mnt >> /mnt/etc/fstab
+cat /mnt/etc/fstab
+arch-chroot /mnt
+ln -sf /usr/share/zoneinfo/America/Chicago /etc/localtime
+hwclock —w —l
+vim /etc/locale.gen
+  en_US.UTF-8
+echo 'LANG=en_US.UTF-8' > /etc/locale.conf
+echo [system-id] > /etc/hostname
+vim /etc/hosts
+  127.0.0.1   localhost
+  ::1         localhost
+  127.0.1.1   [system-id].localdomain  [system-id]
+passwd
+useradd -m -g users -G wheel -s /bin/bash [user-id]
+passwd [user-id]
+locale-gen
+bootctl --path=/boot install
+vim /boot/loader/loader.conf
+  default arch
+  timeout 3 || 0
+vim /boot/loader/entries/arch.conf
+  title Arch Linux
+  linux /vmlinuz-linux
+  initrd /intel-ucode.img
+  initrd /initramfs-linux.img
+  options root=UUID=<UUID> rw
+  :r !blkid [NOTE: yank /dev/sda2 UUID, w/out quotes, replacing <UUID>]
+systemctl enable dhcpcd.service
+pacman -Sy openssh
+systemctl enable sshd.service
+vim /etc/sudoers
+  [user-id] ALL=(ALL) ALL
+vim /etc/mkinitcpio.conf
+  MODULES=(intel_agp i915)
+vim /etc/modules
+  coretemp
+  applesmc
+pacman -Sy xorg xorg-xinit lightdm lightdm-gtk-greeter networkmanager ntp awesome xorg-xbacklight pcmanfm gvfs pulseaudio pulseeffects pavucontrol alacritty termite xf86-input-libinput exfat-utils udiskie ntfs-3g xorg-xset noto-fonts noto-fonts-cjk noto-fonts-emoji git vim gdb chromium flashplugin vlc easytag transmission-gtk qt5-base gimp inkscape nomacs devilspie physlock gufw totem lxappearance libreoffice file-roller expac bashtop neofetch deepin-screenshot youtube-dl
+  # INTEL GPU: intel-media-driver xf86-video-intel xf86-video-nouveau bumblebee bbswitch
+  # NVIDIA GPU: xf86-video-nouveau bumblebee bbswitch picom pyside2
+  # go
+  # ghc ghc-static ghc-libs cabal-install happy alex haskell-parallel haskell-haddock-library haskell-extra stack
+systemctl enable lightdm.service
+systemctl enable NetworkManager
+systemctl enable systemd-timesyncd.service
+systemctl enable ntpd.service
+timedatectl set-ntp true
+systemctl enable ufw.service
+pacman -Syyu
+mkinitcpio -P
+exit
+umount /mnt/boot
+umount /mnt
+reboot
+
+########################################
+
+## END ##
+
+########################################
