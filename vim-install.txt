@@ -1,0 +1,24 @@
+########################################
+
+## VIM SETUP ##
+
+########################################
+
+
+# Vim: 
+  # Setup ~/.vimrc
+  # Clone into Git: git clone https://github.com/vim/vim.git
+    # IFF "--enable-gui=gtk2": “:%s/GTimeVal/GDateTime/g"
+      sudo vim /usr/include/gtk-2.0/gtk/gtktooltips.h
+      sudo vim /usr/include/glib-2.0/glib/gtypes.h
+    # cd vim/src
+    # ./configure --with-features=huge --enable-multibyte --enable-rubyinterp=yes --enable-pythoninterp=yes --with-python-config-dir=/usr/lib/python2.7/config --enable-python3interp=yes --with-python3-config-dir=/usr/lib/python3.5/config --enable-perlinterp=yes --enable-luainterp=yes --enable-gui=gtk3 --enable-cscope --prefix=/usr/local
+    # sudo make install
+    # cd
+    # rm -Rf vim
+
+########################################
+
+## END ##
+
+########################################
