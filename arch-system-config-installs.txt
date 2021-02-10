@@ -1,0 +1,128 @@
+########################################
+
+## SYSTEM CONFIG && INSTALLS ##
+
+########################################
+
+##### WIFI SETUP #####
+
+nmcli device wifi list
+nmcli device wifi connect *NETWORK password *PASSWORD
+
+##### MAC MINI FANS // MBPFAN GITHUB #####
+
+git clone https://github.com/dgraziotin/mbpfan.git
+cd ./mbpfan
+make
+sudo make install
+sudo make tests
+sudo ./bin/mbpfan -t
+sudo mbpfan
+sudo cp mbpfan.service /etc/systemd/system/
+sudo systemctl enable mbpfan.service
+sudo systemctl daemon-reload
+sudo systemctl start mbpfan.service
+sudo vim /etc/mbpfan.conf
+#  min_fan1_speed = 2500	# put the *lowest* value of "cat /sys/devices/platform/applesmc.768/fan*_min"
+#  max_fan1_speed = 5500	# put the *highest* value of "cat /sys/devices/platform/applesmc.768/fan*_max"
+#  low_temp = 35			# try ranges 55-63, default is 63
+#  high_temp = 50			# try ranges 58-66, default is 66
+#  max_temp = 70			# take highest number returned by "cat /sys/devices/platform/coretemp.*/hwmon/hwmon*/temp*_max", divide by 1000
+#  polling_interval = 1	# default is 1 seconds
+
+##### CKB-NEXT // iCUE CORSAIR #####
+
+git clone https://aur.archlinux.org/ckb-next.git
+cd ./ckb-next
+makepkg -si
+sudo systemctl enable ckb-next-daemon
+sudo systemctl start ckb-next-daemon
+
+##### DEVILSPIE2 #####
+
+https://aur.archlinux.org/devilspie2.git
+gpg --keyserver keyserver.ubuntu.com --recv-keys 194B631AB2DA2888
+
+##### YACREADER // PDF, CBR, CBZ, etal #####
+
+git clone https://aur.archlinux.org/libunarr.git
+git clone https://aur.archlinux.org/libpdfium-nojs.git
+git clone https://aur.archlinux.org/yacreader.git
+
+##### UNIMATRIX #####
+
+git clone https://aur.archlinux.org/unimatrix-git.git
+
+###### /etc/fstab // 2nd HDD mount ######
+
+# Replace <UUID> w/ UUID tag
+# UUID=<UUID> /run/media/[NAME]    ntfs-3g     defaults     0 0
+# UUID=<UUID> /run/media/[NAME]    ext4    rw   0   0
+
+##### STOP "A stop job is running..." AT SHUTDOWN #####
+
+# sudo vim /etc/systemd/system.conf
+DefaultTimeoutStartSec=5s
+DefaultTimeoutStopSec=5s
+DefaultTimeoutRestart=5s
+
+##### STOP PACMAN PACKAGE UPDATES #####
+
+# sudo vim /etc/pacman.conf
+IgnorePkg   = vim
+IgnorePkg   = vim-runtime
+IgnorePkg   = adwaita-icon-theme
+
+##### PULSEAUDIO DAEMON // HQ AUDIO #####
+
+# PULSE STEREO > win+r > pavucontrol > Configuration > Analog Stereo Output
+
+# sudo vim /etc/asound.conf
+# Use PulseAudio plugin hw
+pcm.!default {
+   type plug
+   slave.pcm hw
+}
+
+# sudo vim /etc/pulse/daemon.conf
+flat-volumes = no
+default-sample-format = float32le
+default-sample-rate = 48000
+alternate-sample-rate = 44100
+default-sample-channels = 2
+default-channel-map = front-left,front-right
+default-fragments = 2
+default-fragment-size-msec = 125
+resample-method = soxr-vhq
+enable-lfe-remixing = no
+high-priority = yes
+nice-level = -11
+realtime-scheduling = yes
+realtime-priority = 9
+rlimit-rtprio = 9
+daemonize = no
+
+##### Bluetooth #####
+
+sudo pacman -Sy pulseaudio-alsa pulseaudio-bluetooth bluez bluez-libs bluez-utils
+git clone https://aur.archlinux.org/libldac.git
+git clone https://aur.archlinux.org/pulseaudio-modules-bt-git.git
+systemctl enable bluetooth.service
+systemctl start bluetooth.service
+sudo systemctl daemon-reload
+bluetoothctl
+    [bluetooth]# power on
+    [bluetooth]# agent on
+    [bluetooth]# default-agent
+    [bluetooth]# scan on
+    [bluetooth]# pair [ADDRESS]
+    [bluetooth]# trust [ADDRESS]
+    [bluetooth]# connect [ADDRESS]
+pulseaudio -k
+pavucontrol > Direct toward BT source
+
+########################################
+
+## END ##
+
+########################################
