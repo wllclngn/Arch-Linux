@@ -16,16 +16,16 @@ lsblk
 timedatectl set-ntp true
 # cfdisk secondary option
 fdisk -l
-fdisk /dev/nvme0n1 || /dev/sda
+fdisk /dev/nvme0n1
   g
   n > +200MB && rest of the file system
   t > UEFI && Linux filesystem
-mkfs.ext4 /dev/nvme0n1p5 || /dev/sda2
-mkfs.fat -F32 /dev/sda1  
+mkfs.ext4 /dev/nvme0n1p2
+mkfs.fat -F32 /dev/nvme0n1p1  
   # [ NOTE: ALREADY DONE w/ W10 ] 
-mount /dev/nvme0n1p5 /mnt || /dev/sda2 /mnt
+mount /dev/nvme0n1p2 /mnt
 mkdir /mnt/boot
-mount /dev/nvme0n1p2 /mnt/boot || /dev/sda1 /mnt/boot
+mount /dev/nvme0n1p1 /mnt/boot
   # [ NOTE: "rm /mnt/boot/vmlinuz-linux" if reinstalling Arch. ]
 pacman -Sy archlinux-keyring
 pacstrap /mnt base base-devel linux linux-firmware vim man-db man-pages inetutils netctl dhcpcd s-nail intel-ucode
@@ -63,6 +63,7 @@ systemctl enable sshd.service
 vim /etc/sudoers
   [user-id] ALL=(ALL) ALL
 vim /etc/mkinitcpio.conf
+  # INTEL GPU ONLY
   MODULES=(intel_agp i915)
 vim /etc/modules
   coretemp
