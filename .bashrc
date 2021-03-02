@@ -27,7 +27,7 @@ function timer(){
     sleep 0.5
   if [ "$date1" == `date +%s` ]
   then
-    vlc "/run/media/EXTHD/DOCUMENTS [EXTHD]/alarm.wav"  &  notify-send 'ALERT: Your timer has finished.';
+    vlc "./alarm.wav"  &  notify-send 'ALERT: Your timer has finished.';
     exit
   fi
   done
