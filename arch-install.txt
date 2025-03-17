@@ -4,76 +4,66 @@
 
 ########################################
 
-## [ NOTE: Boot Manager will be BOOTX64.EFI in BOOT folder, must be custom Manager in BIOS to load Arch & W10 ]
-
-### NEW INSTALL ###
-
-# sudo wifi-menu -o
+systemctl start iwd
+  iwctl
+    station list
+    station wlan0 scan
+    station wlan0 get-networks
+    station wlan0 connect "<<NETWORK>>"
+    exit
 ping -c 1 www.google.com
-# pacman -Sy vim
-# vim /etc/pacman.d/mirrorlist
-lsblk
+pacman -Sy vim reflector glibc
+vim /etc/pacman.d/mirrorlist
+  https, regional servers
 timedatectl set-ntp true
-# cfdisk secondary option
-fdisk -l
+lsblk || fdisk -l
 fdisk /dev/nvme0n1
-  g
-  n > +200MB && rest of the file system
-  t > UEFI && Linux filesystem
+  d > Delete partitions by numerical representation
+  n > Press Enter twice, +500MB, Enter thru rest of the file system
+  t > Label partition via type: uefi && linux
+  w > Write partition to disk
 mkfs.ext4 /dev/nvme0n1p2
-mkfs.fat -F32 /dev/nvme0n1p1  
-  # [ NOTE: ALREADY DONE w/ W10 ] 
+mkfs.fat -F32 /dev/nvme0n1p1
+  # [ NOTE: ALREADY DONE w/ W10, W11 if dual-booting ] 
 mount /dev/nvme0n1p2 /mnt
-mkdir /mnt/boot
-mount /dev/nvme0n1p1 /mnt/boot
+mount --mkdir /dev/nvme0n1p1 /mnt/boot
   # [ NOTE: "rm /mnt/boot/vmlinuz-linux" if reinstalling Arch. ]
 pacman -Sy archlinux-keyring
 pacstrap /mnt base base-devel linux linux-firmware vim man-db man-pages inetutils netctl dhcpcd s-nail intel-ucode
 genfstab -U /mnt >> /mnt/etc/fstab
 cat /mnt/etc/fstab
+bootctl --esp-path=/mnt/boot install || [OLD:] bootctl --path=/boot install
 arch-chroot /mnt
 ln -sf /usr/share/zoneinfo/America/Chicago /etc/localtime
-hwclock —w —l
+hwclock —wl
 vim /etc/locale.gen
   en_US.UTF-8
 echo 'LANG=en_US.UTF-8' > /etc/locale.conf
-echo [system-id] > /etc/hostname
+echo <<machinename>> > /etc/hostname
 vim /etc/hosts
   127.0.0.1   localhost
   ::1         localhost
-  127.0.1.1   [system-id].localdomain  [system-id]
+  127.0.1.1   <<machinename>>
 passwd
-useradd -m -g users -G wheel -s /bin/bash [user-id]
-passwd [user-id]
+useradd -m -g users -G wheel -s /bin/bash <<user>>
+passwd <<user>>
 locale-gen
-bootctl --path=/boot install
 vim /boot/loader/loader.conf
   default arch
-  timeout 3 || 0
+  timeout 0
 vim /boot/loader/entries/arch.conf
   title Arch Linux
   linux /vmlinuz-linux
   initrd /intel-ucode.img
   initrd /initramfs-linux.img
-  options root=UUID=<UUID> rw
-  :r !blkid [NOTE: yank /dev/sda2 UUID, w/out quotes, replacing <UUID>]
+  options root=UUID=<<UUID>> rw
+  :r !blkid [NOTE: yank /dev/nvme0n1p2 UUID, w/out quotes, replacing <<UUID>>]
 systemctl enable dhcpcd.service
 pacman -Sy openssh
 systemctl enable sshd.service
 vim /etc/sudoers
-  [user-id] ALL=(ALL) ALL
-vim /etc/mkinitcpio.conf
-  # INTEL GPU ONLY
-  MODULES=(intel_agp i915)
-vim /etc/modules
-  coretemp
-  applesmc
-pacman -Sy xorg xorg-xinit lightdm lightdm-gtk-greeter networkmanager ntp awesome xorg-xbacklight pcmanfm gvfs pulseaudio pulseeffects pavucontrol alacritty termite xf86-input-libinput exfat-utils udiskie ntfs-3g xorg-xset noto-fonts noto-fonts-cjk noto-fonts-emoji git vim gdb chromium flashplugin vlc easytag transmission-gtk qt5-base gimp inkscape nomacs devilspie physlock gufw totem lxappearance libreoffice file-roller expac bashtop neofetch deepin-screenshot youtube-dl
-  # INTEL GPU: intel-media-driver xf86-video-intel xf86-video-nouveau bumblebee bbswitch
-  # NVIDIA GPU: xf86-video-nouveau bumblebee bbswitch picom pyside2
-  # go
-  # ghc ghc-static ghc-libs cabal-install happy alex haskell-parallel haskell-haddock-library haskell-extra stack
-systemctl enable lightdm.service
+  <<user>> ALL=(ALL:ALL) ALL
+pacman -Sy <<applications>>
 systemctl enable NetworkManager
 systemctl enable systemd-timesyncd.service
 systemctl enable ntpd.service
@@ -85,9 +75,3 @@ exit
 umount /mnt/boot
 umount /mnt
 reboot
-
-########################################
-
-## END ##
-
-########################################
